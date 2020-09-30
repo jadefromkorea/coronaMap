@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html> 
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>myfirstmap</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=qzxtbiqfj0"></script>
+    <script
+    src="https://code.jquery.com/jquery-3.5.1.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+    crossorigin="anonymous">
+    </script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=bcff8eb6dab0bf293d5c8c226137a104&libraries=services"></script>
+</head>
+<body>
+  <div id="navbar">myfirstmap </div>
+  <div id="infoBox">
+    <div id="infoTitle">현재날짜</div>
+    <div id="infoContent">2020.09.27</div>
+  </div>
+  <div id="search">
+    <input id="search_input" placeholder="목적지를 입력해주세요" />
+    <button id="search_button">검색</button>
+  </div>
+  <div id="current">현재 위치</div>
+<div id="map" style="width:100%;height:100vh;"></div>
+
+<script type="text/javascript" src="/data/data.js"></script>
+<script>
+var mapOptions = {
+    center: new naver.maps.LatLng(37.3595704, 127.105399),
+    zoom: 10
+};
+
+var map = new naver.maps.Map('map', mapOptions);
+
+// var markerList = [];
+// var infowindowList = [];
+
+// for (var i in data) {
+//   var target = data[i];
+//   var latlng = new naver.maps.LatLng(target.lat, target.lng);
+//   var marker = new naver.maps.Marker({
+//     map: map,
+//     position: latlng,
+//     icon: {
+//       content: "<div class='marker'></div>",
+//       anchor: new naver.maps.Point(12, 12)
+//     }    
+//   });
+
+//   var content = `<div class='infowindow_wrap'>
+//       <div class='infowindow_title'>${target.title}</div>
+//       <div class='infowindow_content'>${target.content}</div>
+//       <div class='infowindow_date'>${target.date}</div>
+//     </div>`
+
+//   var infowindow = new naver.maps.InfoWindow({
+//     content: content,
+//     backgroundColor: "#00ff0000",
+//     borderColor: "#00ff0000",
+//     anchorSize: new naver.maps.Size(0,0)
+//   });
+
+//   // naver.maps.Event.addListener(marker, "click", getClickHandler(i));
+//   // naver.maps.Event.addListener(map, "click", clickMap(i));
+
+//   markerList.push(marker);
+//   infowindowList.push(infowindow);
+// }
+
+// for (var i=0, ii = markerList.length; i<ii; i++) { 
+//   naver.maps.Event.addListener(map, "click", ClickMap(i));
+//   naver.maps.Event.addListener(markerList[i], "click", getClickHandler(i)); 
+// }
+
+// function ClickMap(markerListLength) {
+//   for (var i=0; i<markerListLength; i++) { 
+//     infowindowList[i].close();
+//   }
+// }
+
+// function getClickHandler(i) {
+//   return function() {
+//     var marker = markerList[i];
+//     var infowindow = infowindowList[i];
+
+//     if(infowindow.getMap()) {
+//       infowindow.close();
+//     } else {
+//       infowindow.open(map, marker)
+//     }
+//   }
+// }
+
+let currentUse = true;
+
+$("#current").click(() => {
+  if("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(function(position){
+      const lat = position.coords.latitude;
+      const lag = position.coords.longitude;
+      const latlng = new naver.maps.LatLng(lat, lag);
+
+      if(currentUse) {
+        var marker = new naver.maps.Marker({
+          map: map,
+          position: latlng, 
+          icon: {
+            content: '<img class="pulse" draggalbe="false" unselectable="on" src="https://myfirstmap.s3.ap-northeast-2.amazonaws.com/circle.png">',
+            anchor: new naver.maps.Point(11, 11),
+          }     
+        });
+
+        currentUse = false;
+      }
+      
+      map.setZoom(14, false);
+      map.panTo(latlng);
+    })
+  }
+  else {
+    alert("위치정보 사용 불가능")
+  }
+});
+
+// 장소 검색 객체를 생성합니다
+let ps = new kakao.maps.services.Places();
+let serach_arr = [];
+
+$("#search_input").on("keydown", function(e){
+  if(e.keyCode === 13){
+    let content = $(this).val();
+    // 키워드로 장소를 검색합니다
+  ps.keywordSearch(content, placeSearchCB);
+  }
+})
+
+$("#search_button").on("click", function(e){
+    let content = $("#search_input").val();
+    // 키워드로 장소를 검색합니다
+    ps.keywordSearch(content, placeSearchCB);
+})
+
+// function placeSearchCB(data, status, pagination) {
+//   if(status === kakao.maps.services.Status.OK){
+//     let target = data[0];
+//     const lat = target.y;
+//     const lng = target.x;
+//     const latlng = new naver.maps.LatLng(lat, lng);
+//     var marker = new naver.maps.Marker({
+//           map: map,
+//           position: latlng
+//     });   
+
+//     if(serach_arr.length == 0) {
+//       serach_arr.push(marker)
+//     }
+//     else{
+//       serach_arr.push(marker)
+//       let pre_marker = serach_arr.splice(0, 1);
+//       pre_marker[0].setMap(null);
+//     }
+
+//     map.setZoom(14, false);
+//     map.panTo(latlng);
+//   }
+//   else{
+//     alert("검색결과가 없습니다.")
+//   }
+// }
+
+
+var markerList = [];
+var infowindowList = [];
+
+function placeSearchCB(data, status, pagination) {
+  if(status === kakao.maps.services.Status.OK){
+    // console.log(data);
+    markerList = [];
+    infowindowList = [];
+
+    for (var i in data) {
+      var target = data[i];
+      var latlng = new naver.maps.LatLng(target.y, target.x);
+      var marker = new naver.maps.Marker({
+        map: map,
+        position: latlng,
+        icon: {
+          content: "<div class='marker'></div>",
+          anchor: new naver.maps.Point(12, 12)
+        }    
+      });
+
+      var content = `<div class='infowindow_wrap'>
+          <div class='infowindow_title'><a href='${target.place_url}' target='_blank'>${target.place_name}</a></div>
+          <div class='infowindow_content'>${target.road_address_name}</div>
+        </div>`
+
+      var infowindow = new naver.maps.InfoWindow({
+        content: content,
+        backgroundColor: "#00ff0000",
+        borderColor: "#00ff0000",
+        anchorSize: new naver.maps.Size(0, 0)
+      });
+
+      infowindow.open(map, marker);
+
+      markerList.push(marker);
+      infowindowList.push(infowindow);
+    }
+
+    for (var i=0; i<markerList.length; i++) {
+      naver.maps.Event.addListener(markerList[i], "click", getClickHandler(i)); 
+    }
+     
+    naver.maps.Event.addListener(map, "click", clickMap(markerList.length));
+  }
+  else{
+    alert("검색결과가 없습니다.");
+  }
+}
+
+function clickMap(markerListLength) {
+  // console.log("markerListLength: "/ + markerListLength)
+  for (var i=0; i<markerListLength; i++) { 
+    // console.log("i: " + i + " | infowindowList[i].getMap(): " + infowindowList[i].getMap())
+
+    if(infowindowList[i].getMap()){
+      infowindowList[i].close();      
+    }
+    // else{infowindowList[i].open(map, markerList[i])}
+  }
+}
+
+function getClickHandler(i) {
+  return function() {
+    var marker = markerList[i];
+    var infowindow = infowindowList[i];
+    // console.log("infowindow.getMap(): " + infowindow.getMap());
+
+    if(infowindow.getMap()) {
+      infowindow.close();
+    } else {
+      infowindow.open(map, marker)
+    }
+  }
+}
+
+
+
+
+
+</script>
+</body>
+</html>
